@@ -1,0 +1,235 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pop It & Slime Game</title>
+    <style>
+        /* СТИЛИ (CSS) */
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
+            font-family: sans-serif;
+            overflow: hidden;
+            touch-action: manipulation; /* Улучшает отклик на мобилках */
+        }
+
+        .menu {
+            display: flex;
+            gap: 20px;
+            z-index: 10;
+        }
+
+        .game-card {
+            width: 120px;
+            height: 120px;
+            background: white;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            user-select: none;
+        }
+
+        .game-card:active {
+            transform: scale(0.9);
+        }
+
+        .icon {
+            font-size: 50px;
+            margin-bottom: 10px;
+        }
+
+        .game-card span {
+            font-weight: bold;
+            color: #555;
+        }
+
+        /* Экран игры */
+        #game-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #f0f0f0;
+            z-index: 20;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            z-index: 30;
+        }
+
+        /* Стили для Pop It */
+        .pop-it-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            padding: 20px;
+            background: #ff6b81;
+            border-radius: 30px;
+        }
+
+        .bubble {
+            width: 60px;
+            height: 60px;
+            background: #ffafbd;
+            border-radius: 50%;
+            box-shadow: inset -5px -5px 10px rgba(0,0,0,0.1), inset 5px 5px 10px rgba(255,255,255,0.5);
+            cursor: pointer;
+        }
+
+        .bubble.popped {
+            background: #ff8e9b;
+            box-shadow: inset 5px 5px 10px rgba(0,0,0,0.2);
+            transform: scale(0.95);
+        }
+
+        /* Стили для Slime */
+        #slime-area {
+            width: 300px;
+            height: 300px;
+            background: #7bed9f;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+cursor: pointer; }
+          .slime-blob {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+</style>
+<!-- ГЛАВНОЕ МЕНЮ -->
+<div class="menu" id="main-menu">
+    <div class="game-card" onclick="startGame('popit')">
+        <div class="icon">🔘</div>
+        <span>Pop It</span>
+    </div>
+    <div class="game-card" onclick="startGame('slime')">
+        <div class="icon">💧</div>
+        <span>Slime</span>
+    </div>
+</div>
+
+<!-- ЭКРАН ИГРЫ -->
+<div id="game-screen">
+    <button class="back-btn" onclick="stopGame()">← Назад</button>
+    <div id="game-content"></div>
+</div>
+
+<script>
+    /* ЛОГИКА (JS) */
+    const mainMenu = document.getElementById('main-menu');
+    const gameScreen = document.getElementById('game-screen');
+    const gameContent = document.getElementById('game-content');
+
+    // Функция запуска игры
+    function startGame(type) {
+        mainMenu.style.display = 'none';
+        gameScreen.style.display = 'flex';
+        gameContent.innerHTML = ''; // Очищаем экран
+
+        if (type === 'popit') {
+            createPopIt();
+        } else if (type === 'slime') {
+            createSlime();
+        }
+    }
+
+    // Функция выхода
+    function stopGame() {
+        mainMenu.style.display = 'flex';
+        gameScreen.style.display = 'none';
+        gameContent.innerHTML = '';
+    }
+
+    // --- ЛОГИКА POP IT ---
+    function createPopIt() {
+        const container = document.createElement('div');
+        container.className = 'pop-it-container';
+
+        // Создаем 16 пузырьков
+        for (let i = 0; i < 16; i++) {
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+
+            // Обработка нажатия (и для мышки, и для тача)
+            const popAction = (e) => {
+                e.preventDefault();
+                bubble.classList.toggle('popped');
+                // Маленький звук (вибрация если можно)
+                if (navigator.vibrate) navigator.vibrate(20);
+            };
+
+            bubble.addEventListener('mousedown', popAction);
+            bubble.addEventListener('touchstart', popAction);
+
+            container.appendChild(bubble);
+        }
+        gameContent.appendChild(container);
+    }
+
+    // --- ЛОГИКА SLIME ---
+    function createSlime() {
+        const slime = document.createElement('div');
+        slime.id = 'slime-area';
+        gameContent.appendChild(slime);
+
+        const makeBlob = (x, y) => {
+            const blob = document.createElement('div');
+            blob.className = 'slime-blob';
+            const size = Math.random() * 40 + 20;
+            blob.style.width = size + 'px';
+            blob.style.height = size + 'px';
+            blob.style.left = (x - size/2) + 'px';
+            blob.style.top = (y - size/2) + 'px';
+            slime.appendChild(blob);
+
+            // Убираем пятно через секунду
+            setTimeout(() => blob.remove(), 1000);
+        };
+
+        const handleMove = (e) => {
+            e.preventDefault();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            const rect = slime.getBoundingClientRect();
+            // Проверяем, попал ли палец/мышь в область слайма
+            if (clientX >= rect.left && clientX <= rect.right &&
+clientY >= rect.top && clientY <= rect.bottom) { makeBlob(clientX - rect.left, clientY - rect.top); } };
+              slime.addEventListener('mousemove', handleMove);
+        slime.addEventListener('touchmove', handleMove, {passive: false});
+        slime.addEventListener('mousedown', handleMove);
+    }
+
+    // ЗАПРЕТ МАСШТАБИРОВАНИЯ (Для мобилок)
+    document.addEventListener('gesturestart', (e) => e.preventDefault());
+</script>
